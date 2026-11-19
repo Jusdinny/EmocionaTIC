@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmocionaTIC: Radar del Semáforo Emocional (5.º Grado)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tone.js para retroalimentación sonora suave (sin URLs externas) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Tipografía legible y moderna para estudiantes de primaria -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #EEF2FF 0%, #F0FDF4 50%, #FFFBEB 100%);
+      min-height: 100vh;
+      color: #1E293B;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Animaciones suaves para transiciones de etapa (Principio de Progresión y Coherencia) */
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-step {
+      animation: fadeSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Animación del círculo de respiración guiada */
+    @keyframes breatheCycle {
+      0%, 100% {
+        transform: scale(0.85);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+      }
+      40% {
+        transform: scale(1.18);
+        box-shadow: 0 0 0 18px rgba(16, 185, 129, 0.12);
+      }
+      60% {
+        transform: scale(1.18);
+        box-shadow: 0 0 0 22px rgba(16, 185, 129, 0.08);
+      }
+    }
+    .breathing-active {
+      animation: breatheCycle 10s ease-in-out infinite;
+    }
+
+    /* Resplandor de luces del semáforo */
+    .light-glow-red {
+      box-shadow: 0 0 22px rgba(239, 68, 68, 0.65);
+    }
+    .light-glow-yellow {
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.65);
+    }
+    .light-glow-green {
+      box-shadow: 0 0 22px rgba(16, 185, 129, 0.65);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-indigo-200 selection:text-indigo-900 pb-12">
+
+  <!-- Notificación Toast (reemplaza cualquier alert() nativo) -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+
+  <!-- Barra Superior: Identidad, Progreso (Mayer: Señalización) y Guía Pedagógica -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <!-- Mini Semáforo Emblemático -->
+        <div class="flex flex-col gap-1 bg-slate-900 p-1.5 rounded-xl shadow-inner" aria-hidden="true">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        </div>
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Recurso Interactivo • 5.º Grado</span>
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">EmocionaTIC: Radar del Semáforo</h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Botón de Sonido -->
+        <button id="btnToggleSound" type="button" onclick="toggleSound()"
+          class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition"
+          title="Activar o silenciar efectos suaves">
+          <span id="soundIcon">🔊</span>
+          <span class="hidden sm:inline" id="soundLabel">Sonido ON</span>
+        </button>
+
+        <!-- Botón Ficha Pedagógica (Para Docente / Evaluador) -->
+        <button type="button" onclick="openPedagogicalModal()"
+          class="px-3 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition">
+          <span>📋</span>
+          <span>Ficha Pedagógica</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Progreso Segmentada (Principio de Progresión de Mayer) -->
+    <div class="bg-slate-50 border-t border-slate-100">
+      <div class="max-w-4xl mx-auto px-4 py-2.5">
+        <div class="grid grid-cols-4 gap-2 text-center" id="stepperNav">
+          <div id="stepPill1" class="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm transition">
+            <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[11px]">1</span>
+            <span>Tu Perfil</span>
+          </div>
+          <div id="stepPill2" class="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white text-slate-500 border border-slate-200 text-xs font-semibold transition">
+            <span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">2</span>
+            <span>Video Radar</span>
+          </div>
+          <div id="stepPill3" class="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white text-slate-500 border border-slate-200 text-xs font-semibold transition">
+            <span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">3</span>
+            <span>Rutas y Retos</span>
+          </div>
+          <div id="stepPill4" class="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white text-slate-500 border border-slate-200 text-xs font-semibold transition">
+            <span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[11px]">4</span>
+            <span>Pasaporte</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal (Segmentado: un paso a la vez para evitar sobrecarga cognitiva) -->
+  <main class="max-w-4xl mx-auto px-4 pt-6">
+
+    <!-- ===================================================================== -->
+    <!-- ESTACIÓN 1: RETO INICIAL Y CARACTERIZACIÓN DEL ESTUDIANTE (NIVEL 4)   -->
+    <!-- ===================================================================== -->
+    <section id="station1" class="animate-step space-y-5">
+      <!-- Tarjeta de Reto Inicial (Breve y señalizada) -->
+      <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-blue-800 text-white rounded-3xl p-5 sm:p-7 shadow-lg border-b-4 border-amber-400">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="space-y-2 max-w-2xl">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-extrabold uppercase tracking-wider">
+              🚀 Reto Inicial • Antes de Clase
+            </span>
+            <h2 class="text-xl sm:text-2xl font-extrabold leading-snug">
+              Calibra tu Semáforo Interior y enciende tu Luz Verde para aprender
+            </h2>
+            <p class="text-sm sm:text-base text-indigo-100 leading-relaxed">
+              Cuéntanos quién eres y cómo llegas hoy al salón. Adaptaremos las misiones a tus gustos para ayudarte a regular tus emociones antes de iniciar la clase.
+            </p>
+          </div>
+          <!-- Semáforo Ilustrativo Interactivo -->
+          <div class="self-center sm:self-auto bg-slate-900/90 p-3 rounded-2xl border border-white/15 flex sm:flex-col gap-2.5 shadow-xl">
+            <div class="w-7 h-7 rounded-full bg-red-500 light-glow-red flex items-center justify-center text-[10px] font-bold">ALTO</div>
+            <div class="w-7 h-7 rounded-full bg-amber-400 light-glow-yellow flex items-center justify-center text-[10px] font-bold text-slate-900">PAUSA</div>
+            <div class="w-7 h-7 rounded-full bg-emerald-500 light-glow-green flex items-center justify-center text-[10px] font-bold">SIGUE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de Caracterización (Paso a paso limpio, pocas opciones simultáneas) -->
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-md border border-slate-200 space-y-6">
+        <div class="border-b border-slate-100 pb-3">
+          <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-extrabold">1</span>
+            Personaliza tu Cabina de Piloto
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Tus respuestas personalizarán toda la aventura y tus consejos.</p>
+        </div>
+
+        <!-- 1A. Nombre y Avatar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label for="studentName" class="block text-sm font-bold text-slate-800 mb-2">
+              ✏️ ¿Cómo te llamas o cómo te gusta que te digan?
+            </label>
+            <input id="studentName" type="text" maxlength="25" placeholder="Ej. Sofía, Mateo, Vale..."
+              class="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none text-base font-semibold text-slate-900 bg-slate-50 focus:bg-white transition" />
+          </div>
+
+          <div>
+            <span class="block text-sm font-bold text-slate-800 mb-2">
+              🧑‍🚀 Elige tu insignia de piloto:
+            </span>
+            <div class="grid grid-cols-4 gap-2" id="avatarGroup">
+              <button type="button" onclick="selectAvatar('🚀', 'Astronauta', this)"
+                class="avatar-btn active-choice p-2.5 rounded-2xl border-2 border-indigo-600 bg-indigo-50 flex flex-col items-center gap-1 transition">
+                <span class="text-2xl">🚀</span>
+                <span class="text-[11px] font-bold text-indigo-900">Espacial</span>
+              </button>
+              <button type="button" onclick="selectAvatar('🧭', 'Explorador/a', this)"
+                class="avatar-btn p-2.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white flex flex-col items-center gap-1 transition">
+                <span class="text-2xl">🧭</span>
+                <span class="text-[11px] font-bold text-slate-700">Aventura</span>
+              </button>
+              <button type="button" onclick="selectAvatar('🎨', 'Creador/a', this)"
+                class="avatar-btn p-2.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white flex flex-col items-center gap-1 transition">
+                <span class="text-2xl">🎨</span>
+                <span class="text-[11px] font-bold text-slate-700">Creativo</span>
+              </button>
+              <button type="button" onclick="selectAvatar('⚡', 'Velocista', this)"
+                class="avatar-btn p-2.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white flex flex-col items-center gap-1 transition">
+                <span class="text-2xl">⚡</span>
+                <span class="text-[11px] font-bold text-slate-700">Energía</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1B. Interés Favorito (Adapta las metáforas pedagógicas) -->
+        <div>
+          <span class="block text-sm font-bold text-slate-800 mb-2">
+            ⭐ ¿Qué mundo te gusta más? <span class="text-xs font-normal text-slate-500">(Usaremos ejemplos de tu tema favorito)</span>
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="interestGroup">
+            <button type="button" onclick="selectInterest('videojuegos', '🎮 Videojuegos y Tech', this)"
+              class="interest-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-left transition flex items-center gap-2.5">
+              <span class="text-2xl">🎮</span>
+              <div>
+                <div class="text-xs sm:text-sm font-extrabold text-indigo-950">Videojuegos</div>
+                <div class="text-[11px] text-indigo-700">y Tecnología</div>
+              </div>
+            </button>
+            <button type="button" onclick="selectInterest('deportes', '⚽ Deportes y Juego', this)"
+              class="interest-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-left transition flex items-center gap-2.5">
+              <span class="text-2xl">⚽</span>
+              <div>
+                <div class="text-xs sm:text-sm font-extrabold text-slate-800">Deportes</div>
+                <div class="text-[11px] text-slate-500">y Movimiento</div>
+              </div>
+            </button>
+            <button type="button" onclick="selectInterest('arte', '🎵 Música y Arte', this)"
+              class="interest-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-left transition flex items-center gap-2.5">
+              <span class="text-2xl">🎵</span>
+              <div>
+                <div class="text-xs sm:text-sm font-extrabold text-slate-800">Música y Arte</div>
+                <div class="text-[11px] text-slate-500">y Creatividad</div>
+              </div>
+            </button>
+            <button type="button" onclick="selectInterest('naturaleza', '🌿 Naturaleza y Ciencia', this)"
+              class="interest-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-left transition flex items-center gap-2.5">
+              <span class="text-2xl">🌿</span>
+              <div>
+                <div class="text-xs sm:text-sm font-extrabold text-slate-800">Naturaleza</div>
+                <div class="text-[11px] text-slate-500">y Animales</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1C. Clase que va a empezar -->
+        <div>
+          <span class="block text-sm font-bold text-slate-800 mb-2">
+            📚 ¿Qué clase estás a punto de empezar ahora?
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="subjectGroup">
+            <button type="button" onclick="selectSubject('Matemáticas', '🔢', this)"
+              class="subject-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-center font-bold text-xs sm:text-sm text-indigo-950 transition">
+              🔢 Matemáticas
+            </button>
+            <button type="button" onclick="selectSubject('Ciencias Naturales', '🔬', this)"
+              class="subject-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-center font-bold text-xs sm:text-sm text-slate-700 transition">
+              🔬 Ciencias
+            </button>
+            <button type="button" onclick="selectSubject('Lenguaje e Inglés', '📖', this)"
+              class="subject-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-center font-bold text-xs sm:text-sm text-slate-700 transition">
+              📖 Lenguaje / Inglés
+            </button>
+            <button type="button" onclick="selectSubject('Arte o Ed. Física', '🏅', this)"
+              class="subject-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-center font-bold text-xs sm:text-sm text-slate-700 transition">
+              🏅 Arte / Ed. Física
+            </button>
+          </div>
+        </div>
+
+        <!-- 1D. Chequeo Inicial del Semáforo (3 Opciones claras) -->
+        <div class="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200">
+          <span class="block text-sm sm:text-base font-extrabold text-slate-900 mb-1">
+            🚦 Escáner Inicial: ¿De qué color está tu semáforo AHORA MISMO?
+          </span>
+          <p class="text-xs text-slate-500 mb-3">Sé 100% honesto/a; todas las emociones son válidas y nos ayudan a conocernos.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="initialLightGroup">
+            <!-- Opción Roja -->
+            <button type="button" onclick="selectInitialLight('red', this)"
+              class="light-btn p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-red-400 text-left transition flex items-start gap-3">
+              <span class="w-8 h-8 rounded-full bg-red-500 shrink-0 mt-0.5 shadow-md"></span>
+              <div>
+                <div class="font-extrabold text-sm text-red-700">Luz Roja</div>
+                <div class="text-xs text-slate-600 mt-0.5">Siento enojo, frustración o ganas de gritar. Necesito parar.</div>
+              </div>
+            </button>
+
+            <!-- Opción Amarilla -->
+            <button type="button" onclick="selectInitialLight('yellow', this)"
+              class="light-btn p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-400 text-left transition flex items-start gap-3">
+              <span class="w-8 h-8 rounded-full bg-amber-400 shrink-0 mt-0.5 shadow-md"></span>
+              <div>
+                <div class="font-extrabold text-sm text-amber-700">Luz Amarilla</div>
+                <div class="text-xs text-slate-600 mt-0.5">Tengo nervios, duda, cansancio o distracción. Necesito enfocarme.</div>
+              </div>
+            </button>
+
+            <!-- Opción Verde -->
+            <button type="button" onclick="selectInitialLight('green', this)"
+              class="light-btn p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-left transition flex items-start gap-3">
+              <span class="w-8 h-8 rounded-full bg-emerald-500 shrink-0 mt-0.5 shadow-md"></span>
+              <div>
+                <div class="font-extrabold text-sm text-emerald-700">Luz Verde</div>
+                <div class="text-xs text-slate-600 mt-0.5">Me siento en calma, con curiosidad y listo/a para participar.</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón de Avance -->
+        <div class="flex justify-end pt-2">
+          <button type="button" onclick="goToStation2()"
+            class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-extrabold text-base shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2">
+            <span>Iniciar Entrenamiento Audiovisual</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ESTACIÓN 2: VIDEO DE YOUTUBE Y CALIBRACIÓN DE AUTORREGULACIÓN         -->
+    <!-- ===================================================================== -->
+    <section id="station2" class="hidden animate-step space-y-5">
+      <!-- Mensaje Personalizado de Bienvenida a Estación 2 -->
+      <div id="station2Banner" class="rounded-3xl p-5 sm:p-6 text-white shadow-md bg-slate-900 border-l-8 border-amber-400">
+        <!-- Se llena dinámicamente con JS según nombre, color inicial e interés -->
+      </div>
+
+      <!-- Tarjeta del Video Educativo de YouTube (Principio de Coherencia y Segmentación) -->
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-md border border-slate-200 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">Estación Audiovisual • Recurso Guiado</span>
+            <h3 class="text-lg sm:text-xl font-extrabold text-slate-900">🎬 Descubre cómo funciona tu Semáforo Emocional</h3>
+          </div>
+          <!-- Selector entre 2 videos reales verificados -->
+          <div class="flex gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button type="button" id="vidTab1" onclick="switchVideo('0pvUY3pBenA', 1)"
+              class="px-3 py-1.5 rounded-lg bg-white text-indigo-700 font-bold text-xs shadow-sm transition">
+              Video 1: Autorregulación
+            </button>
+            <button type="button" id="vidTab2" onclick="switchVideo('BQPaquFPBQ0', 2)"
+              class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition">
+              Video 2: Cuento Semáforo
+            </button>
+          </div>
+        </div>
+
+        <!-- Contenedor Responsivo 16:9 de YouTube -->
+        <div class="relative w-full overflow-hidden rounded-2xl bg-slate-900 shadow-inner aspect-video border border-slate-200">
+          <iframe id="youtubeFrame"
+            class="w-full h-full"
+            src="https://www.youtube-nocookie.com/embed/0pvUY3pBenA?rel=0"
+            title="Gestión de emociones y autorregulación para niños"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl">
+          <span>💡 Observa las 3 señales clave del video: <strong>Parar (Rojo)</strong>, <strong>Pensar y Respirar (Amarillo)</strong> y <strong>Actuar con calma (Verde)</strong>.</span>
+          <a id="youtubeExternalLink" href="https://www.youtube.com/watch?v=0pvUY3pBenA" target="_blank" rel="noopener noreferrer"
+            class="text-indigo-600 font-bold hover:underline shrink-0">
+            Abrir en YouTube ↗
+          </a>
+        </div>
+
+        <!-- Micro-Actividad Interactiva 1: Respirador Guiado + Chequeo de Comprensión -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <!-- Herramienta Práctica de Respiración -->
+          <div class="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 flex flex-col items-center justify-between text-center">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Entrenamiento Corporal (10 seg)</span>
+              <h4 class="font-extrabold text-slate-900 text-sm sm:text-base mt-0.5">🫁 Botón de Calma Instantánea</h4>
+              <p class="text-xs text-slate-600 mt-1">Practica una respiración profunda antes de pasar a los retos.</p>
+            </div>
+
+            <div class="my-4 relative flex items-center justify-center">
+              <div id="breathCircle" class="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-extrabold text-xs px-2 text-center shadow-md transition-all">
+                Listo/a
+              </div>
+            </div>
+
+            <button type="button" id="btnStartBreath" onclick="triggerBreathingPractice()"
+              class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow transition">
+              ✨ Hacer 1 Ciclo de Respiración
+            </button>
+          </div>
+
+          <!-- Chequeo Rápido de 3 Opciones (Mayer: Pocas opciones simultáneas) -->
+          <div class="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700">Chequeo de Radar</span>
+              <h4 class="font-extrabold text-slate-900 text-sm sm:text-base mt-0.5">Según el video, ¿qué hacemos cuando estamos en Luz Roja?</h4>
+            </div>
+
+            <div class="space-y-2 my-3" id="videoQuizOptions">
+              <button type="button" onclick="answerVideoCheck(false, this)"
+                class="vid-q-btn w-full p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 text-left text-xs sm:text-sm font-semibold text-slate-700 transition">
+                A) Reaccionar rápido y decir lo primero que pensamos.
+              </button>
+              <button type="button" onclick="answerVideoCheck(true, this)"
+                class="vid-q-btn w-full p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 text-left text-xs sm:text-sm font-semibold text-slate-700 transition">
+                B) Detenernos (¡ALTO!), respirar profundo y bajar la intensidad.
+              </button>
+              <button type="button" onclick="answerVideoCheck(false, this)"
+                class="vid-q-btn w-full p-3 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 text-left text-xs sm:text-sm font-semibold text-slate-700 transition">
+                C) Esconder la emoción y hacer como si no pasara nada.
+              </button>
+            </div>
+
+            <div id="videoCheckFeedback" class="hidden text-xs font-bold p-2.5 rounded-xl"></div>
+          </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+          <button type="button" onclick="switchStation(1)"
+            class="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-sm transition">
+            ← Editar Perfil
+          </button>
+          <button type="button" onclick="goToStation3()"
+            class="px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-200 transition flex items-center gap-2">
+            <span>Elegir mi Ruta de Exploración</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ESTACIÓN 3: RUTAS DE EXPLORACIÓN Y SIMULADOR DE DECISIONES (NIVEL 4)  -->
+    <!-- ===================================================================== -->
+    <section id="station3" class="hidden animate-step space-y-5">
+
+      <!-- SUB-VISTA 3A: Selector de Rutas de Exploración -->
+      <div id="routeSelectorView" class="bg-white rounded-3xl p-5 sm:p-7 shadow-md border border-slate-200 space-y-5">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">Exploración Personalizada • Nivel 4</span>
+          <h3 id="routeSelectorTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
+            Elige tu Ruta de Entrenamiento
+          </h3>
+          <p class="text-sm text-slate-600 mt-1">
+            Cada ruta tiene <strong>3 retos interactivos</strong> adaptados a tu clase y a tus intereses. ¿Qué escenario quieres explorar primero?
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Ruta A -->
+          <button type="button" onclick="startRoute('aula')"
+            class="group p-5 rounded-3xl border-2 border-slate-200 hover:border-indigo-600 bg-gradient-to-b from-white to-indigo-50/40 text-left transition shadow-sm hover:shadow-md flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
+                🎯
+              </div>
+              <span class="text-[11px] font-extrabold uppercase text-indigo-600">Ruta 1 • En el Salón</span>
+              <h4 class="text-base font-extrabold text-slate-900 mt-1">Desafíos de Aprendizaje</h4>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                Supera la frustración cuando un ejercicio no sale a la primera, los nervios al pasar al tablero y el trabajo en grupo.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-200/70 text-xs font-extrabold text-indigo-700 flex items-center justify-between">
+              <span>Explorar Ruta 1</span>
+              <span>➔</span>
+            </div>
+          </button>
+
+          <!-- Ruta B -->
+          <button type="button" onclick="startRoute('convivencia')"
+            class="group p-5 rounded-3xl border-2 border-slate-200 hover:border-emerald-600 bg-gradient-to-b from-white to-emerald-50/40 text-left transition shadow-sm hover:shadow-md flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
+                🤝
+              </div>
+              <span class="text-[11px] font-extrabold uppercase text-emerald-600">Ruta 2 • Amigos y Juego</span>
+              <h4 class="text-base font-extrabold text-slate-900 mt-1">Radar de Convivencia</h4>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                Maneja desacuerdos en equipos de 5.º grado, turnos en actividades y comentarios impulsivos antes de entrar a clase.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-200/70 text-xs font-extrabold text-emerald-700 flex items-center justify-between">
+              <span>Explorar Ruta 2</span>
+              <span>➔</span>
+            </div>
+          </button>
+
+          <!-- Ruta C -->
+          <button type="button" onclick="startRoute('evaluacion')"
+            class="group p-5 rounded-3xl border-2 border-slate-200 hover:border-amber-500 bg-gradient-to-b from-white to-amber-50/40 text-left transition shadow-sm hover:shadow-md flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
+                ⚡
+              </div>
+              <span class="text-[11px] font-extrabold uppercase text-amber-700">Ruta 3 • Misión Calma</span>
+              <h4 class="text-base font-extrabold text-slate-900 mt-1">Antes de un Quiz o Reto</h4>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                Transforma el miedo a equivocarte y la prisa del reloj en concentración tranquila y seguridad personal.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-200/70 text-xs font-extrabold text-amber-700 flex items-center justify-between">
+              <span>Explorar Ruta 3</span>
+              <span>➔</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <button type="button" onclick="switchStation(2)"
+            class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs sm:text-sm transition">
+            ← Volver al Video
+          </button>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA 3B: Escenario Interactivo Activo (1 escenario a la vez, máximo 3 opciones) -->
+      <div id="scenarioPlayerView" class="hidden bg-white rounded-3xl p-5 sm:p-7 shadow-md border border-slate-200 space-y-5">
+        <!-- Cabecera de Progreso de la Ruta -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <span id="activeRouteBadge" class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">Ruta Seleccionada</span>
+            <h3 id="scenarioTitle" class="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">Escenario 1 de 3</h3>
+          </div>
+          <!-- Indicador visual de 3 etapas -->
+          <div class="flex items-center gap-2" id="scenarioDots">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-600 text-white">Etapa 1</span>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-400">Etapa 2</span>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-400">Etapa 3</span>
+          </div>
+        </div>
+
+        <!-- Caja de Situación Personalizada -->
+        <div class="bg-gradient-to-br from-slate-50 to-indigo-50/60 rounded-2xl p-4 sm:p-5 border border-indigo-100 space-y-2.5">
+          <div class="flex items-center gap-2 text-xs font-extrabold text-indigo-800 uppercase tracking-wide">
+            <span id="scenarioContextTag">🏫 Situación en Clase</span>
+          </div>
+          <p id="scenarioStory" class="text-sm sm:text-base text-slate-800 leading-relaxed font-medium">
+            <!-- Historia personalizada dinámicamente -->
+          </p>
+          <div class="pt-1 text-xs sm:text-sm font-extrabold text-indigo-950">
+            🤔 ¿Qué decisión tomas con tu semáforo emocional?
+          </div>
+        </div>
+
+        <!-- Máximo 3 Opciones Simultáneas (Principio de Carga Cognitiva de Mayer) -->
+        <div id="scenarioOptionsList" class="space-y-3">
+          <!-- Botones generados dinámicamente -->
+        </div>
+
+        <!-- Tarjeta de Retroalimentación Adaptativa (Aparece al elegir) -->
+        <div id="adaptiveFeedbackBox" class="hidden rounded-2xl p-4 sm:p-5 border-2 space-y-3 animate-step">
+          <!-- Contenido personalizado generado por JS -->
+        </div>
+
+        <!-- Pie de Navegación del Escenario -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+          <button type="button" onclick="backToRouteSelector()"
+            class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-bold text-xs sm:text-sm transition">
+            ↺ Cambiar de Ruta
+          </button>
+
+          <button type="button" id="btnNextScenario" onclick="nextScenarioStep()"
+            class="hidden px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-200 transition flex items-center gap-2">
+            <span id="btnNextScenarioText">Siguiente Escenario</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ESTACIÓN 4: PRODUCTO FINAL Y REFLEXIÓN ("PASAPORTE EMOCIONAL")        -->
+    <!-- ===================================================================== -->
+    <section id="station4" class="hidden animate-step space-y-5">
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-md border border-slate-200 space-y-6">
+        <div class="text-center max-w-xl mx-auto space-y-1.5">
+          <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider">
+            🏆 Misión Completada • Producto Final
+          </span>
+          <h2 id="finalCongratsTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            ¡Excelente trabajo, Piloto!
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600">
+            Has entrenado tu autorregulación emocional. Personaliza tu compromiso final y descarga tu <strong>Pasaporte Emocional</strong> para iniciar tu clase en Luz Verde.
+          </p>
+        </div>
+
+        <!-- Comparativa Visual: Semáforo Inicial vs. Semáforo Calibrado -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 text-center">
+            <div class="text-[11px] font-bold uppercase text-slate-400">Al llegar al salón</div>
+            <div id="summaryStartLight" class="text-base font-extrabold mt-1">🟡 Luz Amarilla</div>
+          </div>
+
+          <div class="text-center flex flex-col items-center justify-center">
+            <span class="text-xs font-extrabold text-indigo-600 uppercase">Calibración</span>
+            <span class="text-2xl my-0.5">➡️</span>
+            <span id="summaryScoreBadge" class="text-xs font-bold bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">3/3 Decisiones</span>
+          </div>
+
+          <div class="bg-emerald-50 p-3.5 rounded-xl border-2 border-emerald-400 text-center">
+            <div class="text-[11px] font-bold uppercase text-emerald-700">Estado Listo para Clase</div>
+            <div class="text-base font-extrabold text-emerald-900 mt-1">🟢 Luz Verde Activa</div>
+          </div>
+        </div>
+
+        <!-- Reflexión Final Personalizada (3 chips rápidos + frase propia) -->
+        <div class="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 sm:p-5 space-y-3">
+          <label class="block text-sm font-extrabold text-indigo-950">
+            ✍️ Tu Reflexión Final: Elige o escribe tu súper-poder emocional para la clase de <span id="finalSubjectLabel" class="underline">Matemáticas</span>:
+          </label>
+
+          <div class="flex flex-wrap gap-2" id="commitmentChips">
+            <button type="button" onclick="selectCommitment('Haré 3 respiraciones profundas antes de responder si algo me frustra.', this)"
+              class="commit-chip px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm transition">
+              🫁 Respirar 3 veces ante la frustración
+            </button>
+            <button type="button" onclick="selectCommitment('Pediré ayuda con calma en lugar de rendirme o enojarme.', this)"
+              class="commit-chip px-3 py-2 rounded-xl bg-white border border-indigo-200 text-indigo-900 hover:bg-indigo-100 text-xs font-bold transition">
+              🙋 Pedir ayuda con calma
+            </button>
+            <button type="button" onclick="selectCommitment('Escucharé con respeto a mi equipo y celebraré nuestros avances.', this)"
+              class="commit-chip px-3 py-2 rounded-xl bg-white border border-indigo-200 text-indigo-900 hover:bg-indigo-100 text-xs font-bold transition">
+              🤝 Escuchar y apoyar a mi equipo
+            </button>
+          </div>
+
+          <input id="customCommitmentInput" type="text" maxlength="110"
+            value="Haré 3 respiraciones profundas antes de responder si algo me frustra."
+            oninput="renderPassportCanvas()"
+            class="w-full px-4 py-2.5 rounded-xl border border-indigo-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-600"
+            placeholder="Escribe tu compromiso personal aquí..." />
+        </div>
+
+        <!-- Vista Previa del Pasaporte Emocional Generado en Canvas -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">🪪 Vista previa de tu Pasaporte Emocional</span>
+            <span class="text-xs text-emerald-700 font-bold">Listo para descargar o compartir</span>
+          </div>
+          <div class="w-full overflow-hidden rounded-2xl border-2 border-slate-200 shadow-inner bg-slate-100 flex justify-center">
+            <canvas id="passportCanvas" class="w-full max-w-2xl h-auto block"></canvas>
+          </div>
+        </div>
+
+        <!-- Acciones Finales (Descargar PNG, Copiar Resumen, Explorar otra Ruta) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <button type="button" onclick="downloadPassportPNG()"
+            class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-200 transition flex items-center justify-center gap-2">
+            <span>⬇️</span>
+            <span>Descargar Pasaporte (PNG)</span>
+          </button>
+
+          <button type="button" onclick="copySummaryToClipboard()"
+            class="py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
+            <span>📋</span>
+            <span>Copiar para mi Docente</span>
+          </button>
+
+          <button type="button" onclick="exploreAnotherRoute()"
+            class="py-3.5 px-4 rounded-2xl bg-white border-2 border-slate-300 hover:border-indigo-500 text-slate-800 font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+            <span>🧭</span>
+            <span>Explorar otra Ruta</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: FICHA PEDAGÓGICA Y PRINCIPIOS DE MAYER (PARA EL DOCENTE)       -->
+  <!-- ===================================================================== -->
+  <div id="pedagogicalModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[88vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 space-y-5 animate-step">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600">Diseño Tecnopedagógico • Interactividad Nivel 4</span>
+          <h3 class="text-xl font-extrabold text-slate-900">Ficha Técnica del Recurso Educativo Digital</h3>
+        </div>
+        <button type="button" onclick="closePedagogicalModal()"
+          class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center">
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs sm:text-sm text-slate-700 leading-relaxed">
+        <div class="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-100">
+          <strong class="text-indigo-950 block mb-0.5">🏷️ Nombre del Recurso:</strong>
+          EmocionaTIC: Radar del Semáforo Emocional (Grado 5.º de Primaria — Activación previa a clase).
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-100">
+          <strong class="text-amber-950 block mb-0.5">🚀 Reto Inicial:</strong>
+          Calibrar el estado emocional antes de iniciar la asignatura mediante un autodiagnóstico (Luz Roja, Amarilla o Verde), entrenamiento audiovisual y toma de decisiones para desbloquear el <em>Pasaporte de Piloto Emocional</em>.
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+          <strong class="text-slate-900 block mb-0.5">🧭 Rutas de Exploración (Nivel 4):</strong>
+          El estudiante elige libremente entre 3 rutas contextualizadas: <em>Ruta 1: Desafíos de Aprendizaje en el Salón</em>, <em>Ruta 2: Radar de Convivencia con Amigos</em> o <em>Ruta 3: Misión Calma antes de Evaluaciones</em>.
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100">
+          <strong class="text-emerald-950 block mb-0.5">🎛️ Interacciones Esperadas y Retroalimentación Adaptativa:</strong>
+          Entrega de datos de caracterización (nombre, avatar, mundo de interés, clase próxima y color emocional inicial), visualización de video educativo de YouTube con chequeo rápido, respirador guiado de 10 segundos y simulación de 3 etapas donde cada respuesta genera retroalimentación personalizada con el nombre del estudiante y metáforas de su interés favorito.
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-purple-50 border border-purple-100">
+          <strong class="text-purple-950 block mb-0.5">🪪 Producto y Reflexión Final:</strong>
+          Construcción de un compromiso personal para la clase y generación automática de un <strong>Pasaporte Emocional descargable (PNG)</strong> y copiable para socializar con el docente.
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-900 text-slate-100">
+          <strong class="text-amber-300 block mb-1">🧠 Aplicación de los Principios de Mayer (Carga Cognitiva):</strong>
+          <ul class="list-disc pl-5 space-y-1 text-xs text-slate-200">
+            <li><strong>Progresión:</strong> Navegación secuencial en 4 estaciones con barra de avance clara.</li>
+            <li><strong>Segmentación:</strong> Micro-bloques cortos (1 escenario por pantalla, enunciados de 2-3 líneas).</li>
+            <li><strong>Señalización:</strong> Código cromático constante del semáforo (Rojo/Amarillo/Verde) e iconos guía.</li>
+            <li><strong>Coherencia visual:</strong> Interfaz limpia sin distractores externos ni muros de texto.</li>
+            <li><strong>Pocas opciones simultáneas:</strong> Máximo 3 alternativas de decisión por reto.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="button" onclick="closePedagogicalModal()"
+          class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">
+          Entendido, volver al recurso
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- LÓGICA DE INTERACTIVIDAD NIVEL 4 Y ADAPTACIÓN PERSONALIZADA           -->
+  <!-- ===================================================================== -->
+  <script>
+    // Estado global de caracterización y progreso del estudiante (Nivel 4)
+    const studentState = {
+      name: '',
+      avatarIcon: '🚀',
+      avatarTitle: 'Astronauta',
+      interestKey: 'videojuegos',
+      interestLabel: '🎮 Videojuegos y Tech',
+      subject: 'Matemáticas',
+      subjectIcon: '🔢',
+      initialLight: null, // 'red' | 'yellow' | 'green'
+      soundEnabled: true,
+      selectedRoute: null, // 'aula' | 'convivencia' | 'evaluacion'
+      currentStepIndex: 0,
+      score: 0,
+      decisionsHistory: [],
+      commitment: 'Haré 3 respiraciones profundas antes de responder si algo me frustra.'
+    };
+
+    // Metáforas personalizadas según el interés del estudiante (Adaptación Nivel 4)
+    const interestMetaphors = {
+      videojuegos: {
+        pauseTip: 'igual que presionar el botón de PAUSA en una partida difícil para recargar tu escudo antes de seguir',
+        winBadge: 'Gamer Estratega de la Calma',
+        coachNote: 'En tu juego mental, controlar tus emociones te da +100 puntos de concentración.'
+      },
+      deportes: {
+        pauseTip: 'igual que pedir un tiempo fuera estratégico en la cancha para respirar y planear la mejor jugada',
+        winBadge: 'Capitán/a del Juego Limpio',
+        coachNote: 'Un buen deportista mantiene la mente fría incluso en los últimos minutos del partido.'
+      },
+      arte: {
+        pauseTip: 'igual que detener el pincel un segundo para elegir el color exacto antes de manchar el lienzo',
+        winBadge: 'Artista de la Armonía',
+        coachNote: 'Tus emociones son como notas musicales: cuando las afinas, toda la clase suena mejor.'
+      },
+      naturaleza: {
+        pauseTip: 'igual que observar cómo se calma el agua de un río después de una lluvia fuerte',
+        winBadge: 'Guardián/a del Equilibrio Natural',
+        coachNote: 'Como en un ecosistema sano, tu calma ayuda a que todo el grupo crezca mejor.'
+      }
+    };
+
+    // Banco de Rutas y Escenarios Adaptativos (3 opciones simultáneas máximo por etapa)
+    const routesCatalog = {
+      aula: {
+        name: 'Ruta 1: Desafíos de Aprendizaje',
+        badge: '🎯 Ruta 1 • En el Salón de Clases',
+        buildScenarios: (s) => [
+          {
+            tag: `🏫 Clase de ${s.subject}`,
+            title: 'Etapa 1 de 3: Cuando algo no sale a la primera',
+            story: `¡Atención, ${s.name}! Estás en plena clase de ${s.subject}. Llevas 10 minutos intentando resolver una actividad, pero te equivocas dos veces seguidas. Sientes calor en la cara y ganas de arrugar la hoja.`,
+            options: [
+              {
+                text: '🔴 Luz Roja: Hacer ¡ALTO!, soltar el lápiz 5 segundos, respirar lento y revisar en qué paso ocurrió el error.',
+                isOptimal: true,
+                lightLabel: 'Luz Roja → Pausa Consciente',
+                feedback: `¡Excelente movimiento, ${s.name}! Reconociste las señales físicas de frustración (Luz Roja) y frenaste a tiempo, ${interestMetaphors[s.interestKey].pauseTip}.`,
+                tip: `En ${s.subject}, detenerte 5 segundos despeja tu mente para encontrar la solución.`
+              },
+              {
+                text: '🟡 Luz Amarilla: Seguir escribiendo súper rápido sin revisar para terminar ya, aunque esté mal.',
+                isOptimal: false,
+                lightLabel: 'Luz Amarilla acelerada',
+                feedback: `Buen intento, ${s.name}, pero acelerar cuando estás frustrado suele multiplicar los errores. Estabas entrando en Luz Roja y necesitabas hacer una pausa breve primero.`,
+                tip: `Recuerda: bajar la velocidad y respirar una vez vale más que correr sin rumbo.`
+              },
+              {
+                text: '🔴 Impulso: Cerrar el cuaderno de golpe y decir "No sirvo para esto".',
+                isOptimal: false,
+                lightLabel: 'Impulso de Luz Roja',
+                feedback: `¡Cuidado, ${s.name}! Esa frase la dice el enojo del momento, no tu verdadera capacidad. Equivocarse es parte normal de aprender ${s.subject}.`,
+                tip: `Cambia "no puedo" por "todavía estoy aprendiendo este paso" y pide una pista al docente.`
+              }
+            ]
+          },
+          {
+            tag: `🗣️ Participación en ${s.subject}`,
+            title: 'Etapa 2 de 3: Nervios antes de pasar al frente',
+            story: `El docente pide voluntarios para explicar una idea de ${s.subject} y dice tu nombre: "¡Adelante, ${s.name}!". Sientes un nudo en el estómago y te sudan un poco las manos.`,
+            options: [
+              {
+                text: '🟡 Luz Amarilla: Aceptar los nervios, inhalar profundo mientras caminas y empezar por la parte que mejor sabes.',
+                isOptimal: true,
+                lightLabel: 'Luz Amarilla regulada',
+                feedback: `¡Brillante, ${s.name}! Los nervios antes de hablar son Luz Amarilla (precaución normal, no peligro). Respirar profundo convierte esa energía en seguridad.`,
+                tip: `Apoya bien ambos pies en el suelo antes de hablar; eso le envía calma inmediata a tu cerebro.`
+              },
+              {
+                text: '🔴 Luz Roja: Quedarte congelado/a mirando el piso y negarte a decir una sola palabra.',
+                isOptimal: false,
+                lightLabel: 'Bloqueo por nervios',
+                feedback: `Tranquilo/a, ${s.name}. Es normal sentir mariposas en el estómago, pero quedarte en silencio te quita la oportunidad de mostrar lo que sabes.`,
+                tip: `Si te pones nervioso/a, puedes decir: "Un segundo para tomar aire" y leer tu primera idea.`
+              },
+              {
+                text: '🟢 Luz Verde forzada: Hablar lo más rápido posible sin respirar para salir corriendo a tu puesto.',
+                isOptimal: false,
+                lightLabel: 'Prisa por ansiedad',
+                feedback: `Casi lo logras, ${s.name}, pero hablar apresurado hace que te enredes. Tu cuerpo te pedía una pausa de Luz Amarilla antes de empezar.`,
+                tip: `Habla a velocidad tranquila, como si se lo contaras a tu mejor amigo/a.`
+              }
+            ]
+          },
+          {
+            tag: `👥 Equipo en ${s.subject}`,
+            title: 'Etapa 3 de 3: Trabajo en grupo con ideas distintas',
+            story: `En ${s.subject} trabajas en pareja. Tu compañero/a propone una idea diferente a la tuya, pero tú estás tranquilo/a, descansado/a y con buena energía.`,
+            options: [
+              {
+                text: '🟢 Luz Verde: Escuchar su propuesta con respeto y combinar lo mejor de ambas ideas.',
+                isOptimal: true,
+                lightLabel: 'Luz Verde colaborativa',
+                feedback: `¡Misión cumplida, ${s.name}! Estás en auténtica Luz Verde: usas tu calma para escuchar, respetar y construir en equipo.`,
+                tip: `Tu actitud tranquila contagia seguridad a todo tu grupo de 5.º grado.`
+              },
+              {
+                text: '🔴 Luz Roja: Imponer tu idea porque crees que tú tienes toda la razón.',
+                isOptimal: false,
+                lightLabel: 'Imposición impulsiva',
+                feedback: `¡Ojo, ${s.name}! Cuando imponemos sin escuchar, encendemos la Luz Roja de los demás. En equipo todos aportan.`,
+                tip: `Pregunta: "¿Cómo podemos unir tu idea con la mía?" y verás mejores resultados.`
+              },
+              {
+                text: '🟡 Luz Amarilla: Dejar que haga todo solo/a para no tener que opinar.',
+                isOptimal: false,
+                lightLabel: 'Participación pasiva',
+                feedback: `Tu voz es muy valiosa, ${s.name}. Estar en Luz Verde significa participar activamente con amabilidad, no quedarse al margen.`,
+                tip: `Comparte al menos una sugerencia positiva para aportar al equipo.`
+              }
+            ]
+          }
+        ]
+      },
+      convivencia: {
+        name: 'Ruta 2: Radar de Convivencia',
+        badge: '🤝 Ruta 2 • Amigos y Convivencia',
+        buildScenarios: (s) => [
+          {
+            tag: '⚽ Cambio de descanso a clase',
+            title: 'Etapa 1 de 3: Un choque accidental en la fila',
+            story: `Suena el timbre para entrar a ${s.subject}. Al formar la fila, un compañero te empuja sin querer y se te cae tu cartuchera. Sientes rabia inmediata.`,
+            options: [
+              {
+                text: '🔴 Luz Roja: Respirar hondo antes de hablar, recoger tus cosas y decir con firmeza pero sin gritar: "Ten más cuidado, por favor".',
+                isOptimal: true,
+                lightLabel: 'Luz Roja frenada con respeto',
+                feedback: `¡Gran autocontrol, ${s.name}! Frenaste el impulso de devolver el empujón, ${interestMetaphors[s.interestKey].pauseTip}, y expresaste lo que sentías sin agredir.`,
+                tip: `Hablar con firmeza y sin insultos resuelve el 90% de los roces en el colegio.`
+              },
+              {
+                text: '🔴 Impulso: Empujarlo de vuelta para que sienta lo mismo.',
+                isOptimal: false,
+                lightLabel: 'Reacción en cadena Roja',
+                feedback: `¡Alerta roja, ${s.name}! Responder un accidente con un empujón convierte un error pequeño en un problema grande antes de ${s.subject}.`,
+                tip: `Primero detén tus manos (¡ALTO!), respira y verifica si fue sin querer.`
+              },
+              {
+                text: '🟡 Luz Amarilla: Entrar al salón de mal genio sin decir nada y tirar el bolso en el pupitre.',
+                isOptimal: false,
+                lightLabel: 'Enojo guardado',
+                feedback: `Guardarte toda la rabia sin soltarla hará que entres distraído/a a ${s.subject}, ${s.name}.`,
+                tip: `Haz una respiración larga antes de cruzar la puerta del salón para dejar el mal rato afuera.`
+              }
+            ]
+          },
+          {
+            tag: '💬 Comentario en el grupo',
+            title: 'Etapa 2 de 3: Cuando alguien se ríe de una duda',
+            story: `Haces una pregunta sobre el tema de ${s.subject} y alguien al fondo del salón suelta una risita. Sientes vergüenza y calor en las mejillas.`,
+            options: [
+              {
+                text: '🟡 Luz Amarilla: Recordar que preguntar es de valientes, respirar tranquilo/a y enfocarte en la explicación del profe.',
+                isOptimal: true,
+                lightLabel: 'Luz Amarilla de autoconfianza',
+                feedback: `¡Excelente respuesta, ${s.name}! No dejaste que la burla apagara tu curiosidad. Preguntar demuestra inteligencia y ganas de aprender.`,
+                tip: `Muchos compañeros tenían la misma duda y agradecen que tú te hayas atrevido a preguntar.`
+              },
+              {
+                text: '🔴 Luz Roja: Gritarle desde tu puesto para que se calle.',
+                isOptimal: false,
+                lightLabel: 'Respuesta impulsiva',
+                feedback: `Entendemos que molesta mucho, ${s.name}, pero gritar en clase te saca de tu centro y te mete en problemas a ti.`,
+                tip: `Mantén tu enfoque en tu aprendizaje; tu calma es tu mejor escudo.`
+              },
+              {
+                text: '🟡 Luz Amarilla baja: Prometerte no volver a preguntar nunca más en clase.',
+                isOptimal: false,
+                lightLabel: 'Auto-limitación',
+                feedback: `¡No te quites tu derecho a aprender, ${s.name}! Tu curiosidad vale muchísimo más que una risita pasajera.`,
+                tip: `Respira, sonríe y sigue participando con seguridad.`
+              }
+            ]
+          },
+          {
+            tag: '🌟 Empatía en el aula',
+            title: 'Etapa 3 de 3: Un amigo llega en Luz Roja',
+            story: `Notas que tu compañero de puesto llegó muy enojado y callado antes de empezar ${s.subject}. Tú estás en Luz Verde.`,
+            options: [
+              {
+                text: '🟢 Luz Verde: Saludarlo con amabilidad, darle un minuto de espacio y ofrecerle ayuda si la necesita.',
+                isOptimal: true,
+                lightLabel: 'Luz Verde empática',
+                feedback: `¡Eres un gran líder positivo, ${s.name}! Cuando estás en Luz Verde, tu empatía ayuda a otros a bajar su Luz Roja sin presionarlos.`,
+                tip: `A veces un simple "¿Todo bien? Aquí estoy si necesitas algo" cambia el día de un amigo.`
+              },
+              {
+                text: '🟡 Luz Amarilla: Insistirle muchas veces "¿Qué tienes? ¡Dime ya!" hasta que se moleste más.',
+                isOptimal: false,
+                lightLabel: 'Presión innecesaria',
+                feedback: `Tu intención era buena, ${s.name}, pero cuando alguien está en Luz Roja necesita primero espacio para respirar.`,
+                tip: `Ofrece apoyo suave y respeta su tiempo para calmarse.`
+              },
+              {
+                text: '🔴 Luz Roja: Burlarte de su cara de mal genio.',
+                isOptimal: false,
+                lightLabel: 'Falta de empatía',
+                feedback: `¡Cuidado, ${s.name}! Burlarse cuando alguien la pasa mal aumenta su enojo y rompe la amistad.`,
+                tip: `Trata a tus compañeros como te gustaría que te trataran cuando tú tienes un mal día.`
+              }
+            ]
+          }
+        ]
+      },
+      evaluacion: {
+        name: 'Ruta 3: Misión Calma antes de Retos',
+        badge: '⚡ Ruta 3 • Antes de Evaluaciones',
+        buildScenarios: (s) => [
+          {
+            tag: `⏱️ Inicio de ${s.subject}`,
+            title: 'Etapa 1 de 3: El reloj empieza a correr',
+            story: `El docente anuncia un reto rápido de ${s.subject} con tiempo límite. Apenas ves la hoja, sientes que tu corazón late más rápido (Luz Amarilla).`,
+            options: [
+              {
+                text: '🟡 Luz Amarilla: Dedicar los primeros 10 segundos a leer todo con calma y respirar lento antes de escribir.',
+                isOptimal: true,
+                lightLabel: 'Luz Amarilla estratégica',
+                feedback: `¡Jugada maestra, ${s.name}! Invertir 10 segundos en respirar y leer bien, ${interestMetaphors[s.interestKey].pauseTip}, te ahorra minutos de confusión.`,
+                tip: `Leer las instrucciones completas antes de empezar te da ventaja inmediata.`
+              },
+              {
+                text: '🔴 Luz Roja: Empezar a responder sin leer las instrucciones por miedo a que no alcance el tiempo.',
+                isOptimal: false,
+                lightLabel: 'Prisa impulsiva',
+                feedback: `¡Frena un poco, ${s.name}! Responder sin leer hace que contestes algo distinto a lo que piden.`,
+                tip: `Despacio y con buena letra siempre se llega más lejos.`
+              },
+              {
+                text: '🟡 Bloqueo: Quedarte mirando el reloj pensando "No voy a alcanzar".',
+                isOptimal: false,
+                lightLabel: 'Pensamiento acelerado',
+                feedback: `Mirar el reloj aumenta los nervios, ${s.name}. Mejor enfoca tu vista en la primera pregunta: paso a paso se completa todo.`,
+                tip: `Concéntrate solo en el ejercicio que tienes enfrente ahora mismo.`
+              }
+            ]
+          },
+          {
+            tag: `🧩 Bloqueo mental en ${s.subject}`,
+            title: 'Etapa 2 de 3: Una pregunta difícil en el camino',
+            story: `Llegas a la pregunta 3 de ${s.subject} y sientes que tu mente se quedó en blanco. Empiezas a frustrarte.`,
+            options: [
+              {
+                text: '🟡 Luz Amarilla: Hacer una pausa de 2 respiraciones, saltar a la siguiente pregunta fácil y volver después con la mente fresca.',
+                isOptimal: true,
+                lightLabel: 'Regulación y estrategia',
+                feedback: `¡Inteligencia total, ${s.name}! Cambiar de ejercicio cuando te bloqueas libera la tensión y activa tu memoria.`,
+                tip: `Resolver primero lo que sí sabes te devuelve la confianza (Luz Verde).`
+              },
+              {
+                text: '🔴 Luz Roja: Borrar tan fuerte que casi rompes la hoja.',
+                isOptimal: false,
+                lightLabel: 'Descarga de frustración',
+                feedback: `¡Alto ahí, ${s.name}! Tu mano muestra que subiste a Luz Roja. Suelta el lápiz 3 segundos y estira los dedos.`,
+                tip: `Cuando tus manos se tensan, relajarlas ayuda a que tu cerebro también se relaje.`
+              },
+              {
+                text: '🔴 Abandono: Dejar el resto de la actividad en blanco sin intentar.',
+                isOptimal: false,
+                lightLabel: 'Rendición rápida',
+                feedback: `No te rindas antes de tiempo, ${s.name}. Aunque una pregunta sea retadora, puedes resolver las demás.`,
+                tip: `Un paso a la vez: cada punto cuenta y demuestra tu esfuerzo.`
+              }
+            ]
+          },
+          {
+            tag: `🏁 Cierre en ${s.subject}`,
+            title: 'Etapa 3 de 3: Terminaste tu reto escolar',
+            story: `Entregas tu actividad de ${s.subject}. Sientes alivio y tranquilidad porque diste tu mejor esfuerzo.`,
+            options: [
+              {
+                text: '🟢 Luz Verde: Celebrar tu esfuerzo en silencio y esperar con respeto a que tus compañeros terminen.',
+                isOptimal: true,
+                lightLabel: 'Luz Verde completa',
+                feedback: `¡Felicitaciones, ${s.name}! Cerraste en Luz Verde: valoras tu propio esfuerzo y respetas el ritmo de los demás.`,
+                tip: `${interestMetaphors[s.interestKey].coachNote}`
+              },
+              {
+                text: '🟢 Luz Verde ruidosa: Gritar "¡Ya acabé, estaba facilísimo!" distrayendo a los demás.',
+                isOptimal: false,
+                lightLabel: 'Exceso de euforia',
+                feedback: `¡Qué bien que terminaste, ${s.name}! Pero gritar eso puede poner en Luz Roja o Amarilla a compañeros que aún están concentrados.`,
+                tip: `Celebra por dentro con una sonrisa y mantén el ambiente tranquilo.`
+              },
+              {
+                text: '🟡 Luz Amarilla: Preocuparte sin parar por si te quedó algo mal después de haber entregado.',
+                isOptimal: false,
+                lightLabel: 'Preocupación posterior',
+                feedback: `Ya diste lo mejor de ti, ${s.name}. Respira tranquilo/a: cada actividad es una oportunidad para aprender.`,
+                tip: `Suelta la preocupación y prepárate con alegría para lo siguiente.`
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    // Sistema de Audio Suave con Tone.js (opcional, sin URLs externas)
+    let synth = null;
+    function playTone(type) {
+      if (!studentState.soundEnabled || typeof Tone === 'undefined') return;
+      try {
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        if (!synth) {
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.04, decay: 0.2, sustain: 0.1, release: 0.6 }
+          }).toDestination();
+          synth.volume.value = -12;
+        }
+        if (type === 'click') synth.triggerAttackRelease('C5', '16n');
+        if (type === 'success') synth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n');
+        if (type === 'gentle') synth.triggerAttackRelease(['D4', 'A4'], '8n');
+        if (type === 'breath') synth.triggerAttackRelease(['F4', 'A4', 'C5'], '2n');
+      } catch (e) {
+        // Silenciar errores si el navegador bloquea audio automático
+      }
+    }
+
+    function toggleSound() {
+      studentState.soundEnabled = !studentState.soundEnabled;
+      document.getElementById('soundIcon').textContent = studentState.soundEnabled ? '🔊' : '🔇';
+      document.getElementById('soundLabel').textContent = studentState.soundEnabled ? 'Sonido ON' : 'Sonido OFF';
+      if (studentState.soundEnabled) playTone('click');
+    }
+
+    // Notificación Toast amigable (nunca alert)
+    function showToast(message, tone = 'indigo') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        indigo: 'bg-indigo-900 text-white border-indigo-500',
+        emerald: 'bg-emerald-800 text-white border-emerald-400',
+        amber: 'bg-amber-600 text-white border-amber-300'
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl border-l-4 text-xs sm:text-sm font-bold animate-step ${colors[tone] || colors.indigo}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // Funciones de Caracterización (Estación 1)
+    function selectAvatar(icon, title, btnEl) {
+      playTone('click');
+      studentState.avatarIcon = icon;
+      studentState.avatarTitle = title;
+      document.querySelectorAll('.avatar-btn').forEach(b => {
+        b.className = 'avatar-btn p-2.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white flex flex-col items-center gap-1 transition';
+      });
+      btnEl.className = 'avatar-btn p-2.5 rounded-2xl border-2 border-indigo-600 bg-indigo-50 flex flex-col items-center gap-1 transition shadow-sm';
+    }
+
+    function selectInterest(key, label, btnEl) {
+      playTone('click');
+      studentState.interestKey = key;
+      studentState.interestLabel = label;
+      document.querySelectorAll('.interest-btn').forEach(b => {
+        b.className = 'interest-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-left transition flex items-center gap-2.5';
+      });
+      btnEl.className = 'interest-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-left transition flex items-center gap-2.5 shadow-sm';
+    }
+
+    function selectSubject(subject, icon, btnEl) {
+      playTone('click');
+      studentState.subject = subject;
+      studentState.subjectIcon = icon;
+      document.querySelectorAll('.subject-btn').forEach(b => {
+        b.className = 'subject-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-indigo-300 bg-white text-center font-bold text-xs sm:text-sm text-slate-700 transition';
+      });
+      btnEl.className = 'subject-btn p-3 rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-center font-bold text-xs sm:text-sm text-indigo-950 transition shadow-sm';
+    }
+
+    function selectInitialLight(color, btnEl) {
+      playTone('click');
+      studentState.initialLight = color;
+      document.querySelectorAll('.light-btn').forEach(b => {
+        b.className = 'light-btn p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition flex items-start gap-3';
+      });
+      const activeStyles = {
+        red: 'light-btn p-4 rounded-2xl border-2 border-red-500 bg-red-50 text-left transition flex items-start gap-3 shadow-sm',
+        yellow: 'light-btn p-4 rounded-2xl border-2 border-amber-500 bg-amber-50 text-left transition flex items-start gap-3 shadow-sm',
+        green: 'light-btn p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-left transition flex items-start gap-3 shadow-sm'
+      };
+      btnEl.className = activeStyles[color];
+    }
+
+    // Navegación entre las 4 Estaciones (Progresión de Mayer)
+    function switchStation(stationNumber) {
+      for (let i = 1; i <= 4; i++) {
+        const sec = document.getElementById(`station${i}`);
+        const pill = document.getElementById(`stepPill${i}`);
+        if (i === stationNumber) {
+          sec.classList.remove('hidden');
+          pill.className = 'flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm transition';
+        } else {
+          sec.classList.add('hidden');
+          if (i < stationNumber) {
+            pill.className = 'flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold transition';
+          } else {
+            pill.className = 'flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white text-slate-500 border border-slate-200 text-xs font-semibold transition';
+          }
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Paso 1 -> Paso 2
+    function goToStation2() {
+      const rawName = document.getElementById('studentName').value.trim();
+      if (!rawName) {
+        showToast('✏️ Escribe tu nombre o apodo para personalizar tu aventura.', 'amber');
+        document.getElementById('studentName').focus();
+        return;
+      }
+      if (!studentState.initialLight) {
+        showToast('🚦 Elige de qué color está tu semáforo ahora mismo.', 'amber');
+        return;
+      }
+      studentState.name = rawName;
+      playTone('success');
+
+      // Personalizar Banner de Estación 2 según su color inicial
+      const banner = document.getElementById('station2Banner');
+      const lightConfigs = {
+        red: {
+          border: 'border-red-500',
+          badge: '🔴 Escáner Inicial: Luz Roja Detectada',
+          msg: `¡Hola, ${studentState.avatarIcon} ${studentState.name}! Gracias por ser honesto/a. Como llegas con intensidad o enojo antes de ${studentState.subject}, este video y el botón de calma te ayudarán a bajar revoluciones.`
+        },
+        yellow: {
+          border: 'border-amber-400',
+          badge: '🟡 Escáner Inicial: Luz Amarilla Detectada',
+          msg: `¡Bienvenido/a, ${studentState.avatarIcon} ${studentState.name}! Llegas con nervios o cansancio antes de ${studentState.subject}. Vamos a transformar esa Luz Amarilla en enfoque tranquilo.`
+        },
+        green: {
+          border: 'border-emerald-400',
+          badge: '🟢 Escáner Inicial: Luz Verde Activa',
+          msg: `¡Genial, ${studentState.avatarIcon} ${studentState.name}! Llegas con gran disposición a ${studentState.subject}. Refuerza tus estrategias en este video para mantener tu Luz Verde toda la clase.`
+        }
+      };
+      const cfg = lightConfigs[studentState.initialLight];
+      banner.className = `rounded-3xl p-5 sm:p-6 text-white shadow-md bg-slate-900 border-l-8 ${cfg.border}`;
+      banner.innerHTML = `
+        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300 block mb-1">${cfg.badge}</span>
+        <p class="text-sm sm:text-base text-slate-100 leading-relaxed font-medium">${cfg.msg}</p>
+      `;
+
+      switchStation(2);
+    }
+
+    // Cambiar Video de YouTube en Estación 2
+    function switchVideo(videoId, tabNum) {
+      playTone('click');
+      document.getElementById('youtubeFrame').src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
+      document.getElementById('youtubeExternalLink').href = `https://www.youtube.com/watch?v=${videoId}`;
+
+      const t1 = document.getElementById('vidTab1');
+      const t2 = document.getElementById('vidTab2');
+      if (tabNum === 1) {
+        t1.className = 'px-3 py-1.5 rounded-lg bg-white text-indigo-700 font-bold text-xs shadow-sm transition';
+        t2.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition';
+      } else {
+        t2.className = 'px-3 py-1.5 rounded-lg bg-white text-indigo-700 font-bold text-xs shadow-sm transition';
+        t1.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition';
+      }
+    }
+
+    // Respirador Guiado de 10 segundos
+    let breathTimer = null;
+    function triggerBreathingPractice() {
+      const circle = document.getElementById('breathCircle');
+      const btn = document.getElementById('btnStartBreath');
+      if (breathTimer) return;
+
+      playTone('breath');
+      btn.disabled = true;
+      btn.classList.add('opacity-60');
+      circle.classList.add('breathing-active');
+      circle.textContent = 'Inhala lento... (4s)';
+
+      setTimeout(() => {
+        circle.textContent = 'Sostén suave... (2s)';
+      }, 4000);
+
+      setTimeout(() => {
+        circle.textContent = 'Exhala calma... (4s)';
+      }, 6000);
+
+      breathTimer = setTimeout(() => {
+        circle.classList.remove('breathing-active');
+        circle.textContent = '¡Calma lista! 🟢';
+        btn.disabled = false;
+        btn.classList.remove('opacity-60');
+        btn.textContent = '✨ Repetir Respiración';
+        breathTimer = null;
+        showToast(`🫁 ¡Muy bien, ${studentState.name}! Tu ritmo respiratorio bajó el estrés.`, 'emerald');
+      }, 10000);
+    }
+
+    // Chequeo Rápido del Video
+    function answerVideoCheck(isCorrect, btnEl) {
+      const fb = document.getElementById('videoCheckFeedback');
+      document.querySelectorAll('.vid-q-btn').forEach(b => {
+        b.classList.remove('border-emerald-500', 'bg-emerald-50', 'border-red-400', 'bg-red-50');
+      });
+
+      fb.classList.remove('hidden');
+      if (isCorrect) {
+        playTone('success');
+        btnEl.classList.add('border-emerald-500', 'bg-emerald-50');
+        fb.className = 'text-xs font-bold p-2.5 rounded-xl bg-emerald-100 text-emerald-900';
+        fb.textContent = `✅ ¡Exacto, ${studentState.name}! En Luz Roja paramos y respiramos antes de actuar.`;
+      } else {
+        playTone('gentle');
+        btnEl.classList.add('border-red-400', 'bg-red-50');
+        fb.className = 'text-xs font-bold p-2.5 rounded-xl bg-amber-100 text-amber-900';
+        fb.textContent = `💡 Pista: Cuando sentimos rabia fuerte (Rojo), lo primero es hacer ¡ALTO! y respirar (Opción B).`;
+      }
+    }
+
+    // Paso 2 -> Paso 3
+    function goToStation3() {
+      playTone('click');
+      document.getElementById('routeSelectorTitle').textContent =
+        `${studentState.avatarIcon} ${studentState.name}, elige tu Ruta de Exploración`;
+      document.getElementById('routeSelectorView').classList.remove('hidden');
+      document.getElementById('scenarioPlayerView').classList.add('hidden');
+      switchStation(3);
+    }
+
+    // Iniciar una Ruta de Exploración (Nivel 4)
+    let activeScenarios = [];
+    let currentStepAnswered = false;
+
+    function startRoute(routeKey) {
+      playTone('click');
+      studentState.selectedRoute = routeKey;
+      studentState.currentStepIndex = 0;
+      studentState.score = 0;
+      studentState.decisionsHistory = [];
+
+      const routeObj = routesCatalog[routeKey];
+      activeScenarios = routeObj.buildScenarios(studentState);
+
+      document.getElementById('activeRouteBadge').textContent = routeObj.badge;
+      document.getElementById('routeSelectorView').classList.add('hidden');
+      document.getElementById('scenarioPlayerView').classList.remove('hidden');
+
+      renderCurrentScenario();
+    }
+
+    function backToRouteSelector() {
+      playTone('click');
+      document.getElementById('routeSelectorView').classList.remove('hidden');
+      document.getElementById('scenarioPlayerView').classList.add('hidden');
+    }
+
+    function renderCurrentScenario() {
+      currentStepAnswered = false;
+      const idx = studentState.currentStepIndex;
+      const sc = activeScenarios[idx];
+
+      document.getElementById('scenarioTitle').textContent = sc.title;
+      document.getElementById('scenarioContextTag').textContent = sc.tag;
+      document.getElementById('scenarioStory').textContent = sc.story;
+
+      // Actualizar indicadores de 3 etapas
+      const dots = document.getElementById('scenarioDots').children;
+      for (let i = 0; i < 3; i++) {
+        if (i < idx) {
+          dots[i].className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+          dots[i].textContent = `✓ Etapa ${i + 1}`;
+        } else if (i === idx) {
+          dots[i].className = 'px-3 py-1 rounded-full text-xs font-bold bg-indigo-600 text-white shadow-sm';
+          dots[i].textContent = `Etapa ${i + 1}`;
+        } else {
+          dots[i].className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-400';
+          dots[i].textContent = `Etapa ${i + 1}`;
+        }
+      }
+
+      // Renderizar máximo 3 opciones
+      const list = document.getElementById('scenarioOptionsList');
+      list.innerHTML = '';
+      sc.options.forEach((opt, optIdx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sc-opt-btn w-full p-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-500 bg-white hover:bg-indigo-50/40 text-left text-xs sm:text-sm font-bold text-slate-800 transition shadow-sm flex items-start gap-3';
+        btn.innerHTML = `
+          <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">${optIdx + 1}</span>
+          <span class="leading-relaxed">${opt.text}</span>
+        `;
+        btn.onclick = () => handleScenarioDecision(opt, btn);
+        list.appendChild(btn);
+      });
+
+      // Ocultar retroalimentación y botón siguiente
+      const fbBox = document.getElementById('adaptiveFeedbackBox');
+      fbBox.classList.add('hidden');
+      document.getElementById('btnNextScenario').classList.add('hidden');
+    }
+
+    function handleScenarioDecision(opt, clickedBtn) {
+      if (currentStepAnswered) return;
+      currentStepAnswered = true;
+
+      if (opt.isOptimal) {
+        studentState.score += 1;
+        playTone('success');
+      } else {
+        playTone('gentle');
+      }
+      studentState.decisionsHistory.push(opt.lightLabel);
+
+      // Estilizar botones
+      document.querySelectorAll('.sc-opt-btn').forEach(b => {
+        b.disabled = true;
+        b.classList.add('opacity-60', 'cursor-default');
+      });
+      clickedBtn.classList.remove('opacity-60');
+      clickedBtn.classList.add(
+        opt.isOptimal ? 'border-emerald-500' : 'border-amber-500',
+        opt.isOptimal ? 'bg-emerald-50' : 'bg-amber-50'
+      );
+
+      // Mostrar Retroalimentación Adaptativa Personalizada
+      const fbBox = document.getElementById('adaptiveFeedbackBox');
+      fbBox.classList.remove('hidden');
+      if (opt.isOptimal) {
+        fbBox.className = 'rounded-2xl p-4 sm:p-5 border-2 border-emerald-400 bg-emerald-50/90 space-y-2 animate-step';
+        fbBox.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800">🏆 ¡Decisión Acertada! • ${opt.lightLabel}</span>
+            <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">+1 Punto Radar</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">${opt.feedback}</p>
+          <div class="text-xs font-bold text-emerald-900 bg-white/80 p-2.5 rounded-xl border border-emerald-200">
+            💡 Consejo para ${studentState.subject}: ${opt.tip}
+          </div>
+        `;
+      } else {
+        fbBox.className = 'rounded-2xl p-4 sm:p-5 border-2 border-amber-400 bg-amber-50/90 space-y-2 animate-step';
+        fbBox.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-800">🧭 Aprendizaje del Radar • ${opt.lightLabel}</span>
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900">Reflexión</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">${opt.feedback}</p>
+          <div class="text-xs font-bold text-amber-950 bg-white/80 p-2.5 rounded-xl border border-amber-200">
+            🛠️ Estrategia de mejora: ${opt.tip}
+          </div>
+        `;
+      }
+
+      const nextBtn = document.getElementById('btnNextScenario');
+      const nextText = document.getElementById('btnNextScenarioText');
+      nextBtn.classList.remove('hidden');
+      if (studentState.currentStepIndex < 2) {
+        nextText.textContent = `Continuar a Etapa ${studentState.currentStepIndex + 2}`;
+      } else {
+        nextText.textContent = 'Generar mi Pasaporte Emocional';
+      }
+    }
+
+    function nextScenarioStep() {
+      playTone('click');
+      if (studentState.currentStepIndex < 2) {
+        studentState.currentStepIndex += 1;
+        renderCurrentScenario();
+      } else {
+        prepareStation4();
+      }
+    }
+
+    // Preparar Producto Final (Estación 4)
+    function prepareStation4() {
+      playTone('success');
+      document.getElementById('finalCongratsTitle').textContent =
+        `¡Misión cumplida, ${studentState.avatarIcon} ${studentState.name}!`;
+
+      const startLabels = {
+        red: '🔴 Luz Roja',
+        yellow: '🟡 Luz Amarilla',
+        green: '🟢 Luz Verde'
+      };
+      document.getElementById('summaryStartLight').textContent = startLabels[studentState.initialLight];
+      document.getElementById('summaryScoreBadge').textContent = `${studentState.score}/3 Aciertos`;
+      document.getElementById('finalSubjectLabel').textContent = studentState.subject;
+
+      switchStation(4);
+      setTimeout(renderPassportCanvas, 80);
+    }
+
+    function selectCommitment(text, btnEl) {
+      playTone('click');
+      studentState.commitment = text;
+      document.getElementById('customCommitmentInput').value = text;
+      document.querySelectorAll('.commit-chip').forEach(c => {
+        c.className = 'commit-chip px-3 py-2 rounded-xl bg-white border border-indigo-200 text-indigo-900 hover:bg-indigo-100 text-xs font-bold transition';
+      });
+      btnEl.className = 'commit-chip px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm transition';
+      renderPassportCanvas();
+    }
+
+    // Renderizar Tarjeta Visual del Pasaporte Emocional en HTML5 Canvas
+    function renderPassportCanvas() {
+      const canvas = document.getElementById('passportCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const w = 900;
+      const h = 470;
+      canvas.width = w;
+      canvas.height = h;
+
+      // Fondo degradado elegante
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, '#1E1B4B');
+      grad.addColorStop(0.55, '#312E81');
+      grad.addColorStop(1, '#065F46');
+      ctx.fillStyle = grad;
+      roundRect(ctx, 0, 0, w, h, 28, true, false);
+
+      // Marco interior luminoso
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.lineWidth = 3;
+      roundRect(ctx, 18, 18, w - 36, h - 36, 20, false, true);
+
+      // Encabezado
+      ctx.fillStyle = '#FDE047';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText('EMOCIONATIC • GRADO 5.º • PASAPORTE DE AUTORREGULACIÓN', 45, 58);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 30px sans-serif';
+      ctx.fillText(`${studentState.avatarIcon} Piloto: ${studentState.name}`, 45, 102);
+
+      // Insignia personalizada por interés
+      const badgeTitle = interestMetaphors[studentState.interestKey].winBadge;
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      roundRect(ctx, 45, 120, 480, 38, 12, true, false);
+      ctx.fillStyle = '#A7F3D0';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(`🏅 Insignia: ${badgeTitle}`, 60, 145);
+
+      // Semáforo ilustrado a la derecha
+      ctx.fillStyle = '#0F172A';
+      roundRect(ctx, 730, 45, 120, 230, 24, true, false);
+      // Luz Roja
+      ctx.fillStyle = studentState.initialLight === 'red' ? '#EF4444' : '#451A1A';
+      ctx.beginPath(); ctx.arc(790, 95, 24, 0, Math.PI * 2); ctx.fill();
+      // Luz Amarilla
+      ctx.fillStyle = studentState.initialLight === 'yellow' ? '#F59E0B' : '#453211';
+      ctx.beginPath(); ctx.arc(790, 160, 24, 0, Math.PI * 2); ctx.fill();
+      // Luz Verde (Siempre encendida al completar)
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath(); ctx.arc(790, 225, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Datos de Ruta y Clase
+      ctx.fillStyle = '#E0E7FF';
+      ctx.font = '600 17px sans-serif';
+      const routeName = routesCatalog[studentState.selectedRoute]?.name || 'Entrenamiento Completo';
+      ctx.fillText(`📚 Clase lista: ${studentState.subject}   |   🧭 ${routeName}`, 45, 195);
+
+      const startMap = { red: 'Luz Roja 🔴', yellow: 'Luz Amarilla 🟡', green: 'Luz Verde 🟢' };
+      ctx.fillText(`🚦 Evolución: ${startMap[studentState.initialLight]}  ➔  Luz Verde Activa 🟢 (${studentState.score}/3 logros)`, 45, 232);
+
+      // Caja de Compromiso Final
+      ctx.fillStyle = '#FFFFFF';
+      roundRect(ctx, 45, 295, w - 90, 130, 18, true, false);
+
+      ctx.fillStyle = '#4338CA';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText(`✍️ MI COMPROMISO EMOCIONAL PARA LA CLASE DE ${studentState.subject.toUpperCase()}:`, 68, 328);
+
+      const currentCommitment = document.getElementById('customCommitmentInput').value.trim() || studentState.commitment;
+      ctx.fillStyle = '#1E293B';
+      ctx.font = 'bold 19px sans-serif';
+      wrapCanvasText(ctx, `"${currentCommitment}"`, 68, 362, w - 140, 26);
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    // Descargar Pasaporte como PNG
+    function downloadPassportPNG() {
+      playTone('success');
+      renderPassportCanvas();
+      const canvas = document.getElementById('passportCanvas');
+      const link = document.createElement('a');
+      const safeName = (studentState.name || 'Estudiante').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g, '_');
+      link.download = `Pasaporte_Emocional_${safeName}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('⬇️ ¡Pasaporte Emocional descargado en tu dispositivo!', 'emerald');
+    }
+
+    // Copiar Resumen al Portapapeles (usando execCommand para compatibilidad en iFrames)
+    function copySummaryToClipboard() {
+      playTone('click');
+      const currentCommitment = document.getElementById('customCommitmentInput').value.trim() || studentState.commitment;
+      const startMap = { red: 'Luz Roja', yellow: 'Luz Amarilla', green: 'Luz Verde' };
+      const summaryText =
+        `🚦 EmocionaTIC (5.º Grado) - Pasaporte Emocional\n` +
+        `• Estudiante: ${studentState.avatarIcon} ${studentState.name}\n` +
+        `• Clase: ${studentState.subject}\n` +
+        `• Estado inicial: ${startMap[studentState.initialLight]} ➔ Estado final: Luz Verde 🟢\n` +
+        `• Ruta completada: ${routesCatalog[studentState.selectedRoute]?.name} (${studentState.score}/3)\n` +
+        `• Compromiso: "${currentCommitment}"`;
+
+      const tempArea = document.createElement('textarea');
+      tempArea.value = summaryText;
+      tempArea.style.position = 'fixed';
+      tempArea.style.opacity = '0';
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('📋 ¡Resumen copiado! Listo para pegarlo al docente.', 'indigo');
+      } catch (err) {
+        showToast('No se pudo copiar automáticamente, pero puedes descargar tu imagen PNG.', 'amber');
+      }
+      document.body.removeChild(tempArea);
+    }
+
+    function exploreAnotherRoute() {
+      playTone('click');
+      goToStation3();
+    }
+
+    // Modal de Ficha Pedagógica
+    function openPedagogicalModal() {
+      playTone('click');
+      document.getElementById('pedagogicalModal').classList.remove('hidden');
+    }
+
+    function closePedagogicalModal() {
+      playTone('click');
+      document.getElementById('pedagogicalModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
